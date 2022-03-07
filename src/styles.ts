@@ -12,10 +12,13 @@ const BEZIER_MEDIAN = 0.5; // utility for mid-point bezier curves, to ensure smo
 export interface IStyleClasses {
   container: string;
   particle: string;
+  particleSize: string;
 }
 
 export interface IParticle {
   color: string; // color of particle
+  image: string; // image for particle
+  text: string; // text for particle
   degree: number; // vector direction, between 0-360 (0 being straight up ↑)
 }
 
@@ -26,6 +29,7 @@ interface IParticlesProps {
   force: number;
   floorHeight: number;
   floorWidth: number;
+  onlyCircles: boolean;
 }
 
 const rotationKeyframes = rotationTransforms.reduce((acc, xyz, i) => {
@@ -33,9 +37,9 @@ const rotationKeyframes = rotationTransforms.reduce((acc, xyz, i) => {
     ...acc,
     [`@keyframes rotation-${i}`]: {
       to: {
-        transform: `rotate3d(${xyz.join()}, 360deg)`,
-      },
-    },
+        transform: `rotate3d(${xyz.join()}, 360deg)`
+      }
+    }
   };
 }, {});
 
@@ -46,28 +50,35 @@ const confettiKeyframes = (degrees: number[], floorHeight: number, floorWidth: n
       ...acc,
       [`@keyframes x-axis-${i}`]: {
         to: {
-          transform: `translateX(${landingPoint}px)`,
-        },
-      },
+          transform: `translateX(${landingPoint}px)`
+        }
+      }
     };
   }, {});
 
   return {
     '@keyframes y-axis': {
       to: {
-        transform: `translateY(${floorHeight}px)`,
-      },
+        transform: `translateY(${floorHeight}px)`
+      }
     },
-    ...xLandingPoints,
+    ...xLandingPoints
   };
 };
 
-const confettoStyle = (particle: IParticle, duration: number, force: number, size: number, i: number) => {
+const confettoStyle = (
+  particle: IParticle,
+  duration: number,
+  force: number,
+  size: number,
+  i: number,
+  onlyCircles: boolean
+) => {
   const rotation = Math.random() * (ROTATION_SPEED_MAX - ROTATION_SPEED_MIN) + ROTATION_SPEED_MIN;
   const rotationIndex = Math.round(Math.random() * (rotationTransforms.length - 1));
   const durationChaos = duration - Math.round(Math.random() * 1000);
   const shouldBeCrazy = Math.random() < CRAZY_PARTICLES_FREQUENCY;
-  const isCircle = shouldBeCircle(rotationIndex);
+  const isCircle = onlyCircles || shouldBeCircle(rotationIndex);
 
   // x-axis disturbance, roughly the distance the particle will initially deviate from its target
   const x1 = shouldBeCrazy ? round(Math.random() * CRAZY_PARTICLE_CRAZINESS, 2) : 0;
@@ -94,11 +105,12 @@ const confettoStyle = (particle: IParticle, duration: number, force: number, siz
         animation: `$y-axis ${durationChaos}ms forwards cubic-bezier(${y1}, ${y2}, ${y3}, ${y4})`,
         '&:after': {
           backgroundColor: particle.color,
+          backgroundImage: particle.image ? `url(${particle.image})` : null,
           animation: `$rotation-${rotationIndex} ${rotation}ms infinite linear`,
-          ...(isCircle ? { borderRadius: '50%' } : {}),
-        },
-      },
-    },
+          ...(isCircle ? { borderRadius: '50%' } : {})
+        }
+      }
+    }
   };
 };
 
@@ -108,24 +120,29 @@ const useStyles = ({
   floorHeight,
   floorWidth,
   force,
-  particleSize
+  particleSize,
+  onlyCircles
 }: IParticlesProps) =>
   makeStyles(
     () => {
       const confettiStyles = particles.reduce(
-        (acc, particle, i) => ({ ...acc, ...confettoStyle(particle, duration, force, particleSize, i) }),
+        (acc, particle, i) => ({ ...acc, ...confettoStyle(particle, duration, force, particleSize, i, onlyCircles) }),
         {}
       );
 
       return {
         ...rotationKeyframes,
-        ...confettiKeyframes(particles.map(particle => particle.degree), floorHeight, floorWidth),
+        ...confettiKeyframes(
+          particles.map(particle => particle.degree),
+          floorHeight,
+          floorWidth
+        ),
         container: {
           width: 0,
           height: 0,
           position: 'relative',
           overflow: 'visible',
-          zIndex: 1200,
+          zIndex: 1200
         },
         particle: {
           ...confettiStyles,
@@ -137,10 +154,11 @@ const useStyles = ({
               content: `''`,
               display: 'block',
               width: '100%',
-              height: '100%',
-            },
-          },
+              height: '100%'
+            }
+          }
         },
+        particleSize: { fontSize: particleSize }
       };
     },
     { name: 'ConfettiExplosion' }
