@@ -30,6 +30,7 @@ interface IParticlesProps {
   floorHeight: number;
   floorWidth: number;
   onlyCircles: boolean;
+  fadeOut: boolean;
 }
 
 const rotationKeyframes = rotationTransforms.reduce((acc, xyz, i) => {
@@ -62,6 +63,10 @@ const confettiKeyframes = (degrees: number[], floorHeight: number, floorWidth: n
         transform: `translateY(${floorHeight}px)`
       }
     },
+    '@keyframes fade-out': {
+      from: { opacity: 1 },
+      to: { opacity: 0 }
+    },
     ...xLandingPoints
   };
 };
@@ -72,7 +77,8 @@ const confettoStyle = (
   force: number,
   size: number,
   i: number,
-  onlyCircles: boolean
+  onlyCircles: boolean,
+  fadeOut: boolean
 ) => {
   const rotation = Math.random() * (ROTATION_SPEED_MAX - ROTATION_SPEED_MIN) + ROTATION_SPEED_MIN;
   const rotationIndex = Math.round(Math.random() * (rotationTransforms.length - 1));
@@ -105,8 +111,14 @@ const confettoStyle = (
         animation: `$y-axis ${durationChaos}ms forwards cubic-bezier(${y1}, ${y2}, ${y3}, ${y4})`,
         '&:after': {
           backgroundColor: particle.color,
-          backgroundImage: particle.image ? `url(${particle.image})` : null,
-          animation: `$rotation-${rotationIndex} ${rotation}ms infinite linear`,
+          ...(particle.image
+            ? {
+                backgroundImage: `url(${particle.image})`,
+                backgroundSize: 'contain'
+              }
+            : {}),
+          animation: `$rotation-${rotationIndex} ${rotation}ms infinite linear, ${fadeOut &&
+            `$fade-out ${durationChaos + 2000}ms forwards`}`, // add 2s to the fade out to prolong the animation
           ...(isCircle ? { borderRadius: '50%' } : {})
         }
       }
@@ -121,12 +133,16 @@ const useStyles = ({
   floorWidth,
   force,
   particleSize,
-  onlyCircles
+  onlyCircles,
+  fadeOut
 }: IParticlesProps) =>
   makeStyles(
     () => {
       const confettiStyles = particles.reduce(
-        (acc, particle, i) => ({ ...acc, ...confettoStyle(particle, duration, force, particleSize, i, onlyCircles) }),
+        (acc, particle, i) => ({
+          ...acc,
+          ...confettoStyle(particle, duration, force, particleSize, i, onlyCircles, fadeOut)
+        }),
         {}
       );
 

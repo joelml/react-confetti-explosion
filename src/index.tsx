@@ -13,6 +13,7 @@ const COLORS = ['#FFC700', '#FF0000', '#2E3191', '#41BBC7'];
 const TEXTS = [''];
 const IMAGES = [''];
 const ONLY_CIRCLES = false;
+const FADE_OUT = false;
 
 interface IConfetti {
   particleCount?: number;
@@ -25,6 +26,7 @@ interface IConfetti {
   floorHeight?: number;
   floorWidth?: number;
   onlyCircles?: boolean;
+  fadeOut?: boolean;
 }
 
 const createParticles = (count: number, colors: string[], images: string[], texts: string[]): IParticle[] => {
@@ -47,7 +49,8 @@ function ConfettiExplosion({
   force = FORCE,
   floorHeight = FLOOR_HEIGHT,
   floorWidth = FLOOR_WIDTH,
-  onlyCircles = ONLY_CIRCLES
+  onlyCircles = ONLY_CIRCLES,
+  fadeOut = FADE_OUT
 }: IConfetti) {
   const particles = createParticles(particleCount, colors, images, texts);
   const classes: IStyleClasses = useStyles({
@@ -57,7 +60,8 @@ function ConfettiExplosion({
     force,
     floorWidth,
     floorHeight,
-    onlyCircles
+    onlyCircles,
+    fadeOut
   })();
 
   return (
